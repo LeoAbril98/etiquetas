@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Gerenciamento de Etiquetas</title>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        />
+        <style>
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                text-align: center;
+                background-color: #f0f4f8;
+                margin: 0;
+                padding: 20px;
+                color: #333;
+            }
+
+            h1 {
+                color: #2c3e50;
+                margin-bottom: 30px;
+            }
+
+            .container {
+                max-width: 600px;
+                margin: 30px auto;
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            }
+
+            .button {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                margin: 15px 0;
+                padding: 15px 20px;
+                background-color: #3498db;
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: 600;
+                border: none;
+                cursor: pointer;
+                transition: background-color 0.3s ease, transform 0.2s ease;
+            }
+
+            .button:hover {
+                background-color: #2980b9;
+                transform: translateY(-2px);
+            }
+
+            .button i {
+                margin-right: 10px;
+            }
+
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                overflow: visible;
+            }
+
+            .modal-content {
+                background-color: #fff;
+                margin: 10% auto;
+                padding: 30px;
+                border-radius: 12px;
+                width: 60%;
+                max-width: 500px;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                position: relative;
+            }
+
+            .close {
+                color: #aaa;
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+
+            .close:hover {
+                color: #333;
+            }
+
+            form {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            form label {
+                text-align: left;
+                font-weight: 600;
+            }
+
+            form input,
+            form select {
+                padding: 12px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 16px;
+                transition: border-color 0.3s ease;
+            }
+
+            form input:focus,
+            form select:focus {
+                border-color: #3498db;
+                outline: none;
+            }
+
+            form button[type="submit"] {
+                background-color: #27ae60;
+                color: white;
+                border: none;
+                padding: 15px 20px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+
+            form button[type="submit"]:hover {
+                background-color: #219653;
+            }
+
+            #buscarCepBtn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 10px 20px;
+                background-color: #27ae60;
+                color: white;
+                border-radius: 8px;
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 600;
+                transition: background-color 0.3s ease, transform 0.2s ease;
+                margin-top: 10px;
+            }
+
+            #buscarCepBtn:hover {
+                background-color: #219653;
+                transform: translateY(-2px);
+            }
+
+            #buscarCepBtn i {
+                margin-right: 8px;
+            }
+
+            #buscarCepBtn:disabled {
+                background-color: #95a5a6;
+                cursor: not-allowed;
+            }
+
+            /* Estilo do ícone de loading */
+            #buscarCepLoading {
+                display: none;
+                margin-left: 10px;
+                color: #fff;
+            }
+
+            @media (max-width: 600px) {
+                .modal-content {
+                    width: 90%;
+                }
+            }
+
+            .modal-content.cadastro-cliente {
+                width: 90%;
+                max-width: 1200px;
+                margin: 5% auto;
+            }
+
+            .modal-content.cadastro-cliente form {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .modal-content.cadastro-cliente form > * {
+                grid-column: span 1;
+            }
+
+            .modal-content.cadastro-cliente form button[type="submit"] {
+                grid-column: span 2;
+            }
+        </style>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.7/jquery.inputmask.min.js"></script>
+        <script>
+            function openModal(id) {
+                document.getElementById(id).style.display = "block";
+            }
+            function closeModal(id) {
+                document.getElementById(id).style.display = "none";
+            }
+
+            function buscarCEP() {
+                const cep = document
+                    .getElementById("cep")
+                    .value.replace(/\D/g, "");
+                if (cep.length !== 8) {
+                    alert("CEP inválido");
+                    return;
+                }
+
+                const buscarCepBtn = document.getElementById("buscarCepBtn");
+                const buscarCepTexto =
+                    document.getElementById("buscarCepTexto");
+                const buscarCepLoading =
+                    document.getElementById("buscarCepLoading");
+
+                buscarCepBtn.disabled = true;
+                buscarCepTexto.style.display = "none";
+                buscarCepLoading.style.display = "inline-block";
+
+                fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.erro) {
+                            alert("CEP não encontrado");
+                        } else {
+                            document.getElementById("rua").value =
+                                data.logradouro;
+                            document.getElementById("bairro").value =
+                                data.bairro;
+                            document.getElementById("cidade").value =
+                                data.localidade;
+                            document.getElementById("estado").value = data.uf;
+                        }
+                        buscarCepBtn.disabled = false;
+                        buscarCepTexto.style.display = "inline";
+                        buscarCepLoading.style.display = "none";
+                    })
+                    .catch((error) => {
+                        alert("Erro ao buscar o CEP");
+                        buscarCepBtn.disabled = false;
+                        buscarCepTexto.style.display = "inline";
+                        buscarCepLoading.style.display = "none";
+                    });
+            }
+
+            $(document).ready(function () {
+                $("[data-inputmask]").inputmask();
+            });
+        </script>
+    </head>
+    <body>
+        <h1>Gerenciamento de Etiquetas</h1>
+        <div class="container">
+            <button class="button" onclick="openModal('gerarEtiquetaModal')">
+                <i class="fas fa-barcode"></i> Gerar Etiqueta
+            </button>
+            <button class="button" onclick="openModal('cadastroClienteModal')">
+                <i class="fas fa-user-plus"></i> Cadastrar Cliente
+            </button>
+            <button
+                class="button"
+                onclick="openModal('cadastroTransportadoraModal')"
+            >
+                <i class="fas fa-truck"></i> Cadastrar Transportadora
+            </button>
+        </div>
+
+        <div id="gerarEtiquetaModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('gerarEtiquetaModal')"
+                    >&times;</span
+                >
+                <h2>Gerar Etiqueta</h2>
+                <form method="POST" action="/gerar_etiquetas">
+                    <label>Selecione o Cliente:</label>
+                    <select name="cliente_id">
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente[0] }}">
+                            {{ cliente[1] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <label>Selecione a Transportadora:</label>
+                    <select name="transportadora_id">
+                        {% for transportadora in transportadoras %}
+                        <option value="{{ transportadora[0] }}">
+                            {{ transportadora[1] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <label>Quantidade de Etiquetas:</label>
+                    <input type="number" name="num_etiquetas" required />
+                    <button type="submit">Gerar PDF</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="cadastroClienteModal" class="modal">
+            <div class="modal-content cadastro-cliente">
+                <span class="close" onclick="closeModal('cadastroClienteModal')"
+                    >&times;</span
+                >
+                <h2>Cadastrar Cliente</h2>
+                <form method="POST" action="/add_cliente">
+                    <input
+                        type="text"
+                        name="nome"
+                        placeholder="Nome"
+                        required
+                    />
+                    <div style="display: flex; gap: 10px">
+                        <input
+                            type="text"
+                            id="cep"
+                            name="cep"
+                            placeholder="CEP"
+                            required
+                            data-inputmask="'mask': '99999-999'"
+                        />
+                        <button
+                            type="button"
+                            id="buscarCepBtn"
+                            onclick="buscarCEP()"
+                        >
+                            Buscar CEP
+                        </button>
+                    </div>
+                    <input
+                        type="text"
+                        id="rua"
+                        name="rua"
+                        placeholder="Rua"
+                        required
+                    />
+                    <input
+                        type="text"
+                        id="numero"
+                        name="numero"
+                        placeholder="Número"
+                        required
+                    />
+                    <input
+                        type="text"
+                        id="bairro"
+                        name="bairro"
+                        placeholder="Bairro"
+                        required
+                    />
+                    <input
+                        type="text"
+                        id="cidade"
+                        name="cidade"
+                        placeholder="Cidade"
+                        required
+                    />
+                    <input
+                        type="text"
+                        id="estado"
+                        name="estado"
+                        placeholder="Estado"
+                        required
+                    />
+                    <input
+                        type="text"
+                        id="telefone"
+                        name="telefone"
+                        placeholder="Telefone"
+                        data-inputmask="'mask': '(99) 99999-9999'"
+                        required
+                    />
+                    <button type="submit">Cadastrar Cliente</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="cadastroTransportadoraModal" class="modal">
+            <div class="modal-content">
+                <span
+                    class="close"
+                    onclick="closeModal('cadastroTransportadoraModal')"
+                    >&times;</span
+                >
+                <h2>Cadastrar Transportadora</h2>
+                <form method="POST" action="/add_transportadora">
+                    <input
+                        type="text"
+                        name="nome_transportadora"
+                        placeholder="Nome da Transportadora"
+                        required
+                    />
+                    <button type="submit">Cadastrar Transportadora</button>
+                </form>
+            </div>
+        </div>
+        </div>
+    </body>
+</html>
